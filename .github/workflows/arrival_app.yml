@@ -1,0 +1,54 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+permissions:
+  contents: read
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: exec ssh
+      uses: appleboy/ssh-action@master
+      with: 
+        host: 64.226.71.181
+        username: root
+        password: ${{secrets.PASSWORD}}
+        port: 22
+        script: |
+          cd /devops/microservices
+          source venv/bin/activate
+          git pull origin main
+          pip install -r requirements.txt
+          supervisorctl restart service4
+          supervisorctl restart service5
+          supervisorctl restart service6
+    - name: Run tests and collect coverage
+      run: pytest --cov=tests  --cov-report=xml
+    - name: Upload coverage reports to Codecov with GitHub Action
+      uses: codecov/codecov-action@v3
