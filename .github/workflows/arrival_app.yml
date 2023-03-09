@@ -41,13 +41,14 @@ jobs:
         password: ${{secrets.PASSWORD}}
         port: 22
         script: |
-          cd /devops/microservices
+          cd /home/nurai/microservices
           source venv/bin/activate
           git pull origin main
           pip install -r requirements.txt
-          supervisorctl restart service4
+          supervisorctl restart service1
+          supervisorctl restart service2
+          supervisorctl restart service3
           supervisorctl restart service5
-          supervisorctl restart service6
     - name: Run tests and collect coverage
       run: pytest --cov=tests  --cov-report=xml
     - name: Upload coverage reports to Codecov with GitHub Action
